@@ -169,6 +169,7 @@ public class World extends JFrame {
 	
 	public int GetRandomOnGrid(int high, int low)
 	{
+		//setting of random location exactly within the grid.
 		return (int)(Math.floor(Math.random() * (1 + high - low)) + low) * 20;
 	}
 	
