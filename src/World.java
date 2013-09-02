@@ -18,12 +18,20 @@ public class World extends JFrame {
 	boolean goLeft;
 	boolean goRight;
 	boolean isEaten;
+	boolean isFoodExists;
 	ArrayList<Point> pos;
 	int headX;
 	int headY;
 	int oldX;
 	int oldY;
 	int currBody;
+	
+	int foodLocX;
+	int foodLocY;
+	
+	int counter = 0;
+	
+	boolean stopDrawGrid;
 	
 	public World(String progName)
 	{
@@ -34,6 +42,9 @@ public class World extends JFrame {
 		goLeft = false;
 		goRight = false;
 		isEaten = false;
+		isFoodExists = true;
+		
+		stopDrawGrid = true;
 		
 		pos = new ArrayList<Point>();
 		pos.add(new Point(260, 260));
@@ -41,10 +52,11 @@ public class World extends JFrame {
 		pos.add(new Point(260, 220));
 		pos.add(new Point(260, 200));
 		
-		gameTimer = new Timer(100, new TimerRepaintListener());
+		gameTimer = new Timer(50, new TimerRepaintListener());
 		gameTimer.start();
 		this.addKeyListener(new MyKeyBoardListener());
-		//SpawnFood(g);
+		setFoodLocation();
+		//paintGrid(new Graphics());
 	}
 	
 	private class MyKeyBoardListener implements KeyListener
@@ -73,6 +85,12 @@ public class World extends JFrame {
 				setAllToFalse();
 				goRight = true; 
 			}
+			else if ((key == 'p') || (key == 'P'))
+				gameTimer.stop();
+			else if ((key == 'r') || (key == 'R'))
+				gameTimer.start();
+			
+			
 			System.out.println(key);
 		}
 		@Override
@@ -90,7 +108,6 @@ public class World extends JFrame {
 			goUp = false;
 			goDown = false;
 		}
-		
 	}
 	
 	private class TimerRepaintListener implements ActionListener
@@ -101,36 +118,58 @@ public class World extends JFrame {
 		}
 	}
 	
-	public void paint(Graphics g)
+	public void paintGrid(Graphics g)
 	{
-		headX = pos.get(0).GetX();
-		headY = pos.get(0).GetY();
-		oldX = headX;
-		oldY = headY;
-		super.paintComponents(g);
-		//g.setColor(new Color(238,238,238));
 		for (int point = 0;point<=1500;	point += 20)
 		{
 			g.drawLine(0,point,1500,point);
 			g.drawLine(point,0,point,1500);
+		}	
+	}
+	
+	public void paint(Graphics g)
+	{
+		super.paintComponents(g);
+		
+		//getting the head positions
+		headX = pos.get(0).GetX();
+		headY = pos.get(0).GetY();
+		oldX = headX;
+		oldY = headY;
+		
+		//g.setColor(new Color(238,238,238));
+		//print grid
+		
+		if (stopDrawGrid  == true)
+		{
+			for (int point = 0;point<=1500;	point += 20)
+			{
+				g.drawLine(0,point,1500,point);
+				g.drawLine(point,0,point,1500);
+				//System.out.println("hello");
+			}
 		}
-		//printing position of body
+		stopDrawGrid = false;
+		//printing position of snake's body
 		for(Point p : pos)
 		{
-			g.setColor(Color.black);
-			g.drawRect(p.GetX(), p.GetY(), 20, 20);
+			//g.setColor(Color.black);
 			g.setColor(Color.blue);
+			g.drawRect(p.GetX(), p.GetY(), 20, 20);
 			g.fillRect(p.GetX(), p.GetY(), 20, 20);
 		}
 		
+		//setting of new body positions
 		for(int i = 1; i < pos.size() ; i++)
 		{
 			pos.get(currBody).SetXY(oldX, oldY);
 		}
-		if (currBody != 3)
+		if (currBody != pos.size() - 1)
 			currBody++;
 		else
 			currBody = 1;
+		
+		
 		if (goUp == true)
 			headY -= 20;
 		else if (goDown == true)
@@ -140,31 +179,42 @@ public class World extends JFrame {
 		else if (goRight == true)
 			headX += 20; 
 		
-		pos.get(0).SetXY(headX, headY);
+		pos.get(0).SetXY(headX, headY); //set the new position of snake's  head
 
-		//updating positions of body.
-		
-		/*for(Point p : pos)
-		{
-			//p.SetY(newPos);
-			p.SetY(p.GetY() - 20);
+		//print food
+		//if (isFoodExists)
+		//{
+			if (isEaten)
+			{
+				setFoodLocation();
+				isEaten = false;
+			}
 			
-		}*/
-		if (isEaten)
-			SpawnFood(g);
-			//SpawnFood(g);
-			//SpawnFood(g);
-		//isEaten = false;
+			g.setColor(Color.red);
+			g.fillRect(foodLocX, foodLocY, 20, 20);
+			g.drawRect(foodLocX, foodLocY, 20, 20);
+			//isFoodExists = false;
+		//}
+		
+		//check if eaten.
+		if (isFoodEaten())
+		{
+			isEaten = true;
+			pos.add(new Point(pos.get(pos.size()-1).GetX(), pos.get(pos.size()-1).GetY()));
+		}
+	
 	}
 	
-	public void SpawnFood(Graphics g)
+	public boolean isFoodEaten()
 	{
-		int x = GetRandomOnGrid(20,1);
-		int y = GetRandomOnGrid(20,1);
-		System.out.println(x + " " + y);
-		g.setColor(Color.red);
-		g.fillRect(x, y, 20, 20);
-		g.drawRect(x, y, 20, 20);
+		return ((pos.get(0).GetX() == foodLocX) && (pos.get(0).GetY() == foodLocY));
+	}
+	
+	
+	public void setFoodLocation()
+	{
+		foodLocX = GetRandomOnGrid(20,1);
+		foodLocY = GetRandomOnGrid(20,1);
 	}
 	
 	public int GetRandomOnGrid(int high, int low)
@@ -175,7 +225,7 @@ public class World extends JFrame {
 	public static void main(String [] args)
 	{
 		World window = new World("Sample Movement");
-		
+																																												
 		//System.out.println(window.getBackground());
 		//window.getContentPane().add(new World());
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
